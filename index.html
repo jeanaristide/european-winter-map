@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>European Winter Itinerary & Schengen Travel Map (Dec 2026 – Jan 2027)</title>
+  <meta name="description" content="Interactive visual map and travel route guide for Schengen Visa and European Winter Itinerary across Netherlands, Germany, France, and Switzerland.">
+  
+  <!-- Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet CSS & Font Awesome -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="dark-theme">
+  <div class="app-layout">
+    
+    <!-- Left Floating Navigation / Control Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="brand">
+          <div class="brand-icon">
+            <i class="fa-solid fa-snowflake"></i>
+          </div>
+          <div>
+            <h1>Euro Winter Journey</h1>
+            <span class="sub-title">Schengen Itinerary & Route Visualizer</span>
+          </div>
+        </div>
+        <button class="sidebar-toggle-btn" id="sidebarCollapseBtn" title="Toggle Sidebar">
+          <i class="fa-solid fa-chevron-left"></i>
+        </button>
+      </div>
+
+      <!-- Quick Summary Stats Bar -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-num">5</span>
+          <span class="stat-label">Countries</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-num">16</span>
+          <span class="stat-label">Days Total</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-num">24+</span>
+          <span class="stat-label">Locations</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-num" id="statCost">€1,236</span>
+          <span class="stat-label" id="statCostLabel">Opt 2 (pp)</span>
+        </div>
+      </div>
+
+      <!-- Trip Tab Filter Switcher -->
+      <div class="trip-switcher">
+        <button class="trip-tab active" data-trip="all" id="tabAll">
+          <i class="fa-solid fa-earth-europe"></i> All Routes
+        </button>
+        <button class="trip-tab" data-trip="trip1" id="tabTrip1">
+          <span class="badge badge-t1">Trip 1</span> 12-Day EU Tour
+        </button>
+        <button class="trip-tab" data-trip="trip2" id="tabTrip2">
+          <span class="badge badge-t2">Trip 2</span> 4-Day Swiss
+        </button>
+      </div>
+
+      <!-- Budget Plan Switcher -->
+      <div class="budget-toggle-box">
+        <span class="budget-title"><i class="fa-solid fa-coins"></i> Budget Scenario:</span>
+        <div class="pill-group">
+          <button class="pill-btn active" id="budgetOpt2Btn" data-option="2">
+            Option 2 (Full Experience)
+          </button>
+          <button class="pill-btn" id="budgetOpt1Btn" data-option="1">
+            Option 1 (Budget Saver)
+          </button>
+        </div>
+      </div>
+
+      <!-- Search & Category Filters -->
+      <div class="filter-section">
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="searchInput" placeholder="Search city, attraction, hotel, transit...">
+          <button id="clearSearch" class="clear-search-btn" style="display:none;"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div class="category-pills" id="categoryFilterContainer">
+          <button class="cat-pill active" data-cat="all">All</button>
+          <button class="cat-pill" data-cat="hotel"><i class="fa-solid fa-hotel"></i> Hotels</button>
+          <button class="cat-pill" data-cat="market"><i class="fa-solid fa-gifts"></i> Markets</button>
+          <button class="cat-pill" data-cat="sight"><i class="fa-solid fa-landmark"></i> Sights</button>
+          <button class="cat-pill" data-cat="transit"><i class="fa-solid fa-train"></i> Transit Hubs</button>
+        </div>
+      </div>
+
+      <!-- Play Tour Route Controls -->
+      <div class="tour-playback-box">
+        <button class="tour-btn" id="playTourBtn">
+          <i class="fa-solid fa-play"></i> Auto-Play Itinerary Tour
+        </button>
+        <button class="reset-view-btn" id="resetViewBtn" title="Reset Camera">
+          <i class="fa-solid fa-arrows-to-dot"></i> Fit All
+        </button>
+      </div>
+
+      <!-- Day-by-Day Timeline List -->
+      <div class="timeline-container">
+        <div class="timeline-header">
+          <span id="timelineTitle">Detailed Day-by-Day Schedule</span>
+          <span class="step-count" id="locationCount">24 locations</span>
+        </div>
+        <div class="timeline-list" id="timelineList">
+          <!-- Dynamically populated via app.js -->
+        </div>
+      </div>
+
+      <!-- Sister & Visa Notes Footer Badge -->
+      <div class="sidebar-footer">
+        <div class="visa-badge">
+          <i class="fa-solid fa-passport"></i>
+          <div>
+            <strong>Main Visa Embassy: France (7 Nights)</strong>
+            <p>Port of Entry: AMS • Exit: CDG • Sister: AUS Passport</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Map Canvas & Interactive Overlays -->
+    <main class="map-wrapper">
+      <div id="map" class="map-canvas"></div>
+
+      <!-- Top Floating Action Bar -->
+      <div class="map-top-bar">
+        <div class="route-legend">
+          <div class="legend-item"><span class="legend-dot flight-dot"></span> Flights (easyJet / KLM)</div>
+          <div class="legend-item"><span class="legend-dot train-dot"></span> Trains (ICE / TGV Lyria / SBB)</div>
+          <div class="legend-item"><span class="legend-dot tram-dot"></span> Cross-Border Tram D / Metro</div>
+        </div>
+
+        <div class="map-layer-selector">
+          <button class="layer-btn active" data-layer="dark" title="Dark Carto Style"><i class="fa-solid fa-moon"></i> Dark</button>
+          <button class="layer-btn" data-layer="light" title="Clean Daylight Style"><i class="fa-solid fa-sun"></i> Light</button>
+          <button class="layer-btn" data-layer="satellite" title="Satellite Imagery"><i class="fa-solid fa-satellite"></i> Satellite</button>
+        </div>
+      </div>
+
+      <!-- Floating Detail Card (Visible when marker is clicked) -->
+      <div class="location-detail-panel" id="detailPanel">
+        <button class="close-panel-btn" id="closePanelBtn"><i class="fa-solid fa-xmark"></i></button>
+        <div class="detail-header" id="detailHeader">
+          <span class="detail-tag" id="detailTag">Trip 1 • Day 1</span>
+          <h3 id="detailTitle">Amsterdam Light Festival</h3>
+          <p class="detail-subtitle" id="detailSubtitle"><i class="fa-solid fa-location-dot"></i> Amsterdam, Netherlands</p>
+        </div>
+        
+        <div class="detail-body">
+          <div class="detail-description" id="detailDescription"></div>
+          
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="label"><i class="fa-solid fa-calendar-day"></i> Date</span>
+              <span class="val" id="detailDate">Dec 16, 2026</span>
+            </div>
+            <div class="detail-item">
+              <span class="label"><i class="fa-solid fa-euro-sign"></i> Estimated Cost</span>
+              <span class="val highlight" id="detailCost">Free / €0</span>
+            </div>
+            <div class="detail-item full-width">
+              <span class="label"><i class="fa-solid fa-compass"></i> Commute & Tips</span>
+              <span class="val" id="detailTips">10 min walk from Leidseplein. Supermarket nearby.</span>
+            </div>
+            <div class="detail-item full-width" id="detailSafetyBox">
+              <span class="label"><i class="fa-solid fa-shield-halved"></i> Safety & Area Vibe</span>
+              <span class="val" id="detailSafety">Very safe and vibrant tourist hub.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-actions">
+          <button class="action-btn" id="focusMapBtn"><i class="fa-solid fa-crosshairs"></i> Center on Map</button>
+          <button class="action-btn secondary" id="googleMapsBtn"><i class="fa-solid fa-arrow-up-right-from-square"></i> Open in Google Maps</button>
+        </div>
+      </div>
+
+      <!-- Quick Itinerary Step Selector Floating Widget at Bottom -->
+      <div class="bottom-step-bar">
+        <button class="nav-arrow-btn" id="prevDayBtn" title="Previous Day"><i class="fa-solid fa-arrow-left"></i></button>
+        <div class="current-step-display" id="currentStepDisplay">
+          <span class="step-badge" id="bottomStepBadge">Day 1</span>
+          <span class="step-name" id="bottomStepName">Amsterdam Arrival & Light Festival</span>
+        </div>
+        <button class="nav-arrow-btn" id="nextDayBtn" title="Next Day"><i class="fa-solid fa-arrow-right"></i></button>
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- Leaflet & App Scripts -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <!-- Polyline decorator / curved lines for flights -->
+  <script src="app.js"></script>
+</body>
+</html>
