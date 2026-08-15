@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>European Winter Itinerary & Schengen Travel Map (Dec 2026 – Jan 2027)</title>
-  <meta name="description" content="Interactive visual map and travel route guide for Schengen Visa and European Winter Itinerary across Netherlands, Germany, France, and Switzerland.">
+  <meta name="description" content="Interactive visual map and mobile travel guide for Schengen Visa and European Winter Itinerary across Netherlands, Germany, France, and Switzerland.">
   
   <!-- Google Fonts: Inter & Outfit -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,9 +18,28 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body class="dark-theme">
+
+  <!-- Mobile Top App Header (Visible only on Mobile screens) -->
+  <header class="mobile-header">
+    <div class="mobile-brand">
+      <div class="mobile-brand-icon">
+        <i class="fa-solid fa-snowflake"></i>
+      </div>
+      <div>
+        <h2>Euro Winter 2026/27</h2>
+        <span>Schengen Travel Guide</span>
+      </div>
+    </div>
+    <div class="mobile-trip-pills">
+      <button class="m-pill active" data-trip="all" id="mTabAll">All</button>
+      <button class="m-pill" data-trip="trip1" id="mTabTrip1">Trip 1</button>
+      <button class="m-pill" data-trip="trip2" id="mTabTrip2">Trip 2</button>
+    </div>
+  </header>
+
   <div class="app-layout">
     
-    <!-- Left Floating Navigation / Control Sidebar -->
+    <!-- Left Floating Navigation / Control Sidebar (Desktop & Mobile Drawer) -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <div class="brand">
@@ -57,7 +76,7 @@
         </div>
       </div>
 
-      <!-- Trip Tab Filter Switcher -->
+      <!-- Trip Tab Filter Switcher (Desktop) -->
       <div class="trip-switcher">
         <button class="trip-tab active" data-trip="all" id="tabAll">
           <i class="fa-solid fa-earth-europe"></i> All Routes
@@ -75,10 +94,10 @@
         <span class="budget-title"><i class="fa-solid fa-coins"></i> Budget Scenario:</span>
         <div class="pill-group">
           <button class="pill-btn active" id="budgetOpt2Btn" data-option="2">
-            Option 2 (Full Experience)
+            Option 2 (Full)
           </button>
           <button class="pill-btn" id="budgetOpt1Btn" data-option="1">
-            Option 1 (Budget Saver)
+            Option 1 (Saver)
           </button>
         </div>
       </div>
@@ -103,7 +122,7 @@
       <!-- Play Tour Route Controls -->
       <div class="tour-playback-box">
         <button class="tour-btn" id="playTourBtn">
-          <i class="fa-solid fa-play"></i> Auto-Play Itinerary Tour
+          <i class="fa-solid fa-play"></i> Auto-Play Tour
         </button>
         <button class="reset-view-btn" id="resetViewBtn" title="Reset Camera">
           <i class="fa-solid fa-arrows-to-dot"></i> Fit All
@@ -140,9 +159,9 @@
       <!-- Top Floating Action Bar -->
       <div class="map-top-bar">
         <div class="route-legend">
-          <div class="legend-item"><span class="legend-dot flight-dot"></span> Flights (easyJet / KLM)</div>
-          <div class="legend-item"><span class="legend-dot train-dot"></span> Trains (ICE / TGV Lyria / SBB)</div>
-          <div class="legend-item"><span class="legend-dot tram-dot"></span> Cross-Border Tram D / Metro</div>
+          <div class="legend-item"><span class="legend-dot flight-dot"></span> Flights</div>
+          <div class="legend-item"><span class="legend-dot train-dot"></span> ICE / TGV</div>
+          <div class="legend-item"><span class="legend-dot tram-dot"></span> Tram / Metro</div>
         </div>
 
         <div class="map-layer-selector">
@@ -152,8 +171,9 @@
         </div>
       </div>
 
-      <!-- Floating Detail Card (Visible when marker is clicked) -->
+      <!-- Floating Location Detail Bottom Sheet / Card -->
       <div class="location-detail-panel" id="detailPanel">
+        <div class="panel-drag-handle" id="panelDragHandle"></div>
         <button class="close-panel-btn" id="closePanelBtn"><i class="fa-solid fa-xmark"></i></button>
         <div class="detail-header" id="detailHeader">
           <span class="detail-tag" id="detailTag">Trip 1 • Day 1</span>
@@ -185,13 +205,13 @@
         </div>
 
         <div class="detail-actions">
-          <button class="action-btn" id="focusMapBtn"><i class="fa-solid fa-crosshairs"></i> Center on Map</button>
-          <button class="action-btn secondary" id="googleMapsBtn"><i class="fa-solid fa-arrow-up-right-from-square"></i> Open in Google Maps</button>
+          <button class="action-btn" id="focusMapBtn"><i class="fa-solid fa-crosshairs"></i> Center</button>
+          <button class="action-btn secondary" id="googleMapsBtn"><i class="fa-solid fa-arrow-up-right-from-square"></i> Google Maps</button>
         </div>
       </div>
 
       <!-- Quick Itinerary Step Selector Floating Widget at Bottom -->
-      <div class="bottom-step-bar">
+      <div class="bottom-step-bar" id="bottomStepBar">
         <button class="nav-arrow-btn" id="prevDayBtn" title="Previous Day"><i class="fa-solid fa-arrow-left"></i></button>
         <div class="current-step-display" id="currentStepDisplay">
           <span class="step-badge" id="bottomStepBadge">Day 1</span>
@@ -204,9 +224,81 @@
 
   </div>
 
+  <!-- Dedicated Mobile Modal View for Budget Breakdown -->
+  <div class="mobile-modal" id="mobileBudgetModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-coins"></i> Budget Breakdown</h3>
+        <button class="modal-close" id="closeBudgetModal"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="budget-toggle-box in-modal">
+          <span class="budget-title">Select Tier:</span>
+          <div class="pill-group">
+            <button class="pill-btn active" id="mBudgetOpt2Btn">Option 2 (Full Experience)</button>
+            <button class="pill-btn" id="mBudgetOpt1Btn">Option 1 (Saver)</button>
+          </div>
+        </div>
+
+        <div class="budget-summary-card">
+          <div class="b-row main-total">
+            <span>Trip 1 (12-Day EU Tour)</span>
+            <strong id="mCostT1">€1,236.18 pp</strong>
+          </div>
+          <div class="b-row sub">
+            <span>For 2 Travelers</span>
+            <span id="mCostT1Two">€2,472.36</span>
+          </div>
+          <hr class="b-divider">
+          <div class="b-row main-total">
+            <span>Trip 2 (4-Day Swiss Tour)</span>
+            <strong id="mCostT2">€482.50 pp</strong>
+          </div>
+          <div class="b-row sub">
+            <span>For 2 Travelers</span>
+            <span id="mCostT2Two">€965.00</span>
+          </div>
+          <hr class="b-divider">
+          <div class="b-row grand-total">
+            <span>Combined Total (pp)</span>
+            <strong id="mCostGrand">€1,718.68</strong>
+          </div>
+          <div class="b-row sub grand-two">
+            <span>Total for Both Travelers</span>
+            <strong id="mCostGrandTwo">€3,437.36</strong>
+          </div>
+        </div>
+
+        <div class="visa-notes-box">
+          <h4><i class="fa-solid fa-circle-info"></i> Visa Application Tip</h4>
+          <p>Option 2 is recommended for your French Schengen visa appointment to show realistic paid activity coverage and solid financial capability.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Bottom Sticky Navigation Bar -->
+  <nav class="mobile-bottom-nav">
+    <button class="m-nav-item active" id="mNavMap" data-view="map">
+      <i class="fa-solid fa-map-location-dot"></i>
+      <span>Map</span>
+    </button>
+    <button class="m-nav-item" id="mNavTimeline" data-view="timeline">
+      <i class="fa-solid fa-list-check"></i>
+      <span>Itinerary</span>
+    </button>
+    <button class="m-nav-item" id="mNavBudget" data-view="budget">
+      <i class="fa-solid fa-wallet"></i>
+      <span>Budget</span>
+    </button>
+    <button class="m-nav-item" id="mNavTour" data-view="tour">
+      <i class="fa-solid fa-play"></i>
+      <span>Tour</span>
+    </button>
+  </nav>
+
   <!-- Leaflet & App Scripts -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <!-- Polyline decorator / curved lines for flights -->
   <script src="app.js"></script>
 </body>
 </html>

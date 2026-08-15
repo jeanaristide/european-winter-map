@@ -1,6 +1,6 @@
 /**
  * European Winter Itinerary & Schengen Travel Visualizer
- * Interactive Map & Route Engine
+ * Interactive Map & Mobile-Optimized Route Engine
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -498,15 +498,11 @@ document.addEventListener('DOMContentLoaded', () => {
     attributionControl: false
   });
 
-  // Re-position Zoom control to bottom right
+  // Re-position Zoom control
   L.control.zoom({ position: 'bottomright' }).addTo(map);
 
   // Map Tile Layer Providers
   const tileLayers = {
-    dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-      maxZoom: 19,
-      subdomains: 'abcd'
-    }),
     darkmatter: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       maxZoom: 19,
       subdomains: 'abcd'
@@ -681,6 +677,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
       card.addEventListener('click', () => {
         selectLocation(idx, true);
+        // On mobile, close timeline drawer if opened
+        if (window.innerWidth <= 768) {
+          document.getElementById('sidebar').classList.remove('mobile-open');
+          updateMobileNavActive('map');
+        }
       });
 
       listContainer.appendChild(card);
@@ -774,11 +775,50 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
+    // Update Mobile Modal Budget figures
+    if (currentBudgetOption === 1) {
+      document.getElementById('mCostT1').textContent = '€915.18 pp';
+      document.getElementById('mCostT1Two').textContent = '€1,830.36';
+      document.getElementById('mCostT2').textContent = '€302.50 pp';
+      document.getElementById('mCostT2Two').textContent = '€605.00';
+      document.getElementById('mCostGrand').textContent = '€1,217.68';
+      document.getElementById('mCostGrandTwo').textContent = '€2,435.36';
+    } else {
+      document.getElementById('mCostT1').textContent = '€1,236.18 pp';
+      document.getElementById('mCostT1Two').textContent = '€2,472.36';
+      document.getElementById('mCostT2').textContent = '€482.50 pp';
+      document.getElementById('mCostT2Two').textContent = '€965.00';
+      document.getElementById('mCostGrand').textContent = '€1,718.68';
+      document.getElementById('mCostGrandTwo').textContent = '€3,437.36';
+    }
+
     renderMarkers();
     renderTimelineList();
     if (markerInstances[activeMarkerIndex]) {
       selectLocation(activeMarkerIndex, false);
     }
+  }
+
+  // Set Trip Filter across both Desktop and Mobile buttons
+  function setTrip(tripKey) {
+    currentTrip = tripKey;
+    activeMarkerIndex = 0;
+
+    // Desktop tabs
+    document.querySelectorAll('.trip-tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.trip === tripKey);
+    });
+
+    // Mobile pills
+    document.querySelectorAll('.m-pill').forEach(p => {
+      p.classList.toggle('active', p.dataset.trip === tripKey);
+    });
+
+    renderRoutes();
+    renderMarkers();
+    renderTimelineList();
+    updateBudgetDisplay();
+    fitAllView();
   }
 
   // Fit all visible markers on map
@@ -789,36 +829,62 @@ document.addEventListener('DOMContentLoaded', () => {
     map.fitBounds(group.getBounds().pad(0.18));
   }
 
+  function updateMobileNavActive(viewName) {
+    document.querySelectorAll('.m-nav-item').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.view === viewName);
+    });
+  }
+
   // --------------------------------------------------------------------------
   // Event Listeners
   // --------------------------------------------------------------------------
 
-  // Trip Tabs
+  // Desktop Trip Tabs
   const tabs = [document.getElementById('tabAll'), document.getElementById('tabTrip1'), document.getElementById('tabTrip2')];
   tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      tabs.forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      currentTrip = tab.dataset.trip;
-      activeMarkerIndex = 0;
-      renderRoutes();
-      renderMarkers();
-      renderTimelineList();
-      updateBudgetDisplay();
-      fitAllView();
-    });
+    tab.addEventListener('click', () => setTrip(tab.dataset.trip));
   });
 
-  // Budget Option Pills
+  // Mobile Header Trip Pills
+  const mTabs = [document.getElementById('mTabAll'), document.getElementById('mTabTrip1'), document.getElementById('mTabTrip2')];
+  mTabs.forEach(tab => {
+    tab.addEventListener('click', () => setTrip(tab.dataset.trip));
+  });
+
+  // Budget Option Pills (Desktop)
   const opt1Btn = document.getElementById('budgetOpt1Btn');
   const opt2Btn = document.getElementById('budgetOpt2Btn');
   opt1Btn.addEventListener('click', () => {
     opt1Btn.classList.add('active');
     opt2Btn.classList.remove('active');
+    document.getElementById('mBudgetOpt1Btn').classList.add('active');
+    document.getElementById('mBudgetOpt2Btn').classList.remove('active');
     currentBudgetOption = 1;
     updateBudgetDisplay();
   });
   opt2Btn.addEventListener('click', () => {
+    opt2Btn.classList.add('active');
+    opt1Btn.classList.remove('active');
+    document.getElementById('mBudgetOpt2Btn').classList.add('active');
+    document.getElementById('mBudgetOpt1Btn').classList.remove('active');
+    currentBudgetOption = 2;
+    updateBudgetDisplay();
+  });
+
+  // Budget Option Pills (Mobile Modal)
+  const mOpt1Btn = document.getElementById('mBudgetOpt1Btn');
+  const mOpt2Btn = document.getElementById('mBudgetOpt2Btn');
+  mOpt1Btn.addEventListener('click', () => {
+    mOpt1Btn.classList.add('active');
+    mOpt2Btn.classList.remove('active');
+    opt1Btn.classList.add('active');
+    opt2Btn.classList.remove('active');
+    currentBudgetOption = 1;
+    updateBudgetDisplay();
+  });
+  mOpt2Btn.addEventListener('click', () => {
+    mOpt2Btn.classList.add('active');
+    mOpt1Btn.classList.remove('active');
     opt2Btn.classList.add('active');
     opt1Btn.classList.remove('active');
     currentBudgetOption = 2;
@@ -880,7 +946,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('detailPanel').style.display = 'none';
   });
 
-  // Sidebar Collapse
+  // Sidebar Collapse (Desktop)
   const sidebar = document.getElementById('sidebar');
   const sidebarBtn = document.getElementById('sidebarCollapseBtn');
   sidebarBtn.addEventListener('click', () => {
@@ -891,26 +957,62 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Tour Auto-Play Mode
-  const playTourBtn = document.getElementById('playTourBtn');
-  playTourBtn.addEventListener('click', () => {
+  function toggleTour() {
     const filtered = getFilteredLocations();
     if (filtered.length === 0) return;
 
     if (isTourPlaying) {
       clearInterval(tourInterval);
       isTourPlaying = false;
-      playTourBtn.innerHTML = '<i class="fa-solid fa-play"></i> Auto-Play Itinerary Tour';
+      playTourBtn.innerHTML = '<i class="fa-solid fa-play"></i> Auto-Play Tour';
       playTourBtn.classList.remove('playing');
+      document.getElementById('mNavTour').classList.remove('active');
     } else {
       isTourPlaying = true;
-      playTourBtn.innerHTML = '<i class="fa-solid fa-pause"></i> Pause Itinerary Tour';
+      playTourBtn.innerHTML = '<i class="fa-solid fa-pause"></i> Pause Tour';
       playTourBtn.classList.add('playing');
+      document.getElementById('mNavTour').classList.add('active');
 
       tourInterval = setInterval(() => {
         const next = (activeMarkerIndex + 1) % filtered.length;
         selectLocation(next, true);
       }, 4000);
     }
+  }
+
+  const playTourBtn = document.getElementById('playTourBtn');
+  playTourBtn.addEventListener('click', toggleTour);
+
+  // Mobile Bottom Navigation Handlers
+  const mobileBudgetModal = document.getElementById('mobileBudgetModal');
+  document.getElementById('closeBudgetModal').addEventListener('click', () => {
+    mobileBudgetModal.classList.remove('open');
+    updateMobileNavActive('map');
+  });
+
+  document.getElementById('mNavMap').addEventListener('click', () => {
+    sidebar.classList.remove('mobile-open');
+    mobileBudgetModal.classList.remove('open');
+    updateMobileNavActive('map');
+    setTimeout(() => map.invalidateSize(), 300);
+  });
+
+  document.getElementById('mNavTimeline').addEventListener('click', () => {
+    sidebar.classList.add('mobile-open');
+    mobileBudgetModal.classList.remove('open');
+    updateMobileNavActive('timeline');
+  });
+
+  document.getElementById('mNavBudget').addEventListener('click', () => {
+    sidebar.classList.remove('mobile-open');
+    mobileBudgetModal.classList.add('open');
+    updateMobileNavActive('budget');
+  });
+
+  document.getElementById('mNavTour').addEventListener('click', () => {
+    sidebar.classList.remove('mobile-open');
+    mobileBudgetModal.classList.remove('open');
+    toggleTour();
   });
 
   // Tile Layer Switcher
@@ -936,7 +1038,7 @@ document.addEventListener('DOMContentLoaded', () => {
   updateBudgetDisplay();
   fitAllView();
 
-  // Select first item after 500ms
+  // Select first item after 400ms
   setTimeout(() => {
     selectLocation(0, false);
   }, 400);
